@@ -6,7 +6,7 @@
 ```markdown
 # Mod Name - [Version Number] - [Release/Beta/Alpha]
 ## What is changed?
-Change version number from `v.x.x.x` to `v.x.x.x` 
+Change version number from `x.x.x` to `x.x.x` 
 ### ➕Add:
     
     `d`
@@ -19,7 +19,7 @@ Change version number from `v.x.x.x` to `v.x.x.x`
     
     `d`
 # Notes
-
+Full Changelog: 
 
 
 
