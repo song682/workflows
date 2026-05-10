@@ -1,7 +1,7 @@
 name: Build mod jar
 
 on:
-  [workflow_dispatch, push]
+  [workflow_dispatch, push, pull_request]
 
 permissions:
   contents: read
