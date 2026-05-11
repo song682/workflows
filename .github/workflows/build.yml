@@ -3,6 +3,12 @@ name: Build mod jar
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      native-sources:
+        description: 'Artifact name containing pre-built JNI natives'
+        required: false
+        type: string
+        default: ''
   push:
   pull_request:
 
@@ -15,6 +21,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+      
+      - name: Download JNI natives (from called workflow)
+        if: inputs.native-sources != ''
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ inputs.native-sources }}
+          path: .
       
       - name: Set up JDK 8
         uses: actions/setup-java@v5
