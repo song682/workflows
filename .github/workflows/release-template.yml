@@ -1,3 +1,5 @@
+name: Release Template
+
 on:
   workflow_call:
     inputs:
@@ -18,6 +20,9 @@ on:
         required: false
       MODRINTH_PROJECT_ID:
         required: false
+
+permissions:
+  contents: write
 
 jobs:
   check-version:
@@ -52,3 +57,10 @@ jobs:
           echo "mod-name=${MOD_NAME}" >> $GITHUB_OUTPUT
           echo "Version detected: ${VERSION}"
           echo "Mod name detected: ${MOD_NAME}"
+
+      - name: Determine release type
+        id: determine-type
+        run: |
+          VERSION="${{ steps.extract-version.outputs.version }}"
+
+          if [[ $VERSION =~
