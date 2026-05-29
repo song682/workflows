@@ -266,7 +266,9 @@ jobs:
           echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Release to CurseForge
-        if: secrets.CURSEFORGE_TOKEN != ''
+        if: ${{ env.CURSEFORGE_TOKEN != '' }}
+        env:
+           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
         uses: itsmeow/curseforge-upload@v3
         with:
           file_path: ${{ needs.build.outputs.jar-files }}
@@ -278,7 +280,9 @@ jobs:
         continue-on-error: true
 
       - name: Release to Modrinth
-        if: secrets.MODRINTH_TOKEN != ''
+        if: ${{ env.MODRINTH_TOKEN != '' }}
+        env:
+           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         uses: Kode/modrinth-modpack-action@v0.5.4
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
