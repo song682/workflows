@@ -2,6 +2,17 @@ name: Build mod jar
 
 on:
   workflow_dispatch:
+    inputs:
+      native-sources:
+        description: 'Artifact name containing pre-built JNI natives'
+        required: false
+        type: string
+        default: ''
+      gradle-version:
+        description: 'Gradle version to use (e.g., 7.4, 8.0)'
+        required: false
+        type: string
+        default: '7.4'
   workflow_call:
     inputs:
       native-sources:
@@ -9,6 +20,11 @@ on:
         required: false
         type: string
         default: ''
+      gradle-version:
+        description: 'Gradle version to use (e.g., 7.4, 8.0)'
+        required: false
+        type: string
+        default: '7.4'
   push:
   pull_request:
 
@@ -37,7 +53,7 @@ jobs:
       
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: 7.4
+          gradle-version: ${{ inputs.gradle-version || '7.4' }}
         name: Set up Gradle
         
       - name: Add permission

@@ -11,6 +11,14 @@ on:
         description: 'Minecraft version (e.g., 1.7.10)'
         required: true
         type: string
+      gradle-version:
+        description: 'Gradle version to use (e.g., 7.4, 8.0)'
+        required: false
+        type: string
+        default: '7.4'
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -38,16 +46,23 @@ jobs:
           echo "tags-path=$FILE" >> $GITHUB_OUTPUT
           echo "Found Tags.java at: $FILE"
 
-      - name: Extract version and mod name from Tags.java
+      - name: Extract version and mod name
         id: extract-version
         run: |
           FILE="${{ steps.locate-tags.outputs.tags-path }}"
-          VERSION=$(grep -oP 'VERSION = "\K[^"]+' "$FILE")
           MOD_NAME=$(grep -oP 'NAME = "\K[^"]+' "$FILE")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "mod-name=${MOD_NAME}" >> $GITHUB_OUTPUT
-          echo "Version detected: ${VERSION}"
           echo "Mod name detected: ${MOD_NAME}"
+
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+            echo "Version from tag: ${VERSION}"
+          else
+            VERSION=$(grep -oP 'VERSION = "\K[^"]+' "$FILE")
+            echo "Version from Tags.java: ${VERSION}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Determine release type
         id: determine-type
@@ -108,7 +123,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
         with:
-          gradle-version: 7.4
+          gradle-version: ${{ inputs.gradle-version || '7.4' }}
         name: Set up Gradle
 
       - name: Fix line endings
@@ -218,7 +233,16 @@ jobs:
           MOD_NAME="${{ needs.check-version.outputs.mod-name }}"
           RELEASE_TYPE="${{ needs.check-version.outputs.release-type }}"
           IS_SNAPSHOT="${{ needs.check-version.outputs.is-snapshot }}"
-          MC_VERSION="${{ inputs.mc_version }}"
+
+          # Determine MC version (input for workflow_call, gradle.properties for tag push)
+          if [ -n "${{ inputs.mc_version }}" ]; then
+            MC_VERSION="${{ inputs.mc_version }}"
+          else
+            MC_VERSION=$(grep -oP 'mc_version\s*=\s*\K\S+' gradle.properties 2>/dev/null || echo "")
+            if [ -z "$MC_VERSION" ]; then
+              MC_VERSION=$(grep -oP 'minecraft_version\s*=\s*\K\S+' gradle.properties 2>/dev/null || echo "unknown")
+            fi
+          fi
 
           if [ "$IS_SNAPSHOT" = "true" ]; then
             RELEASE_TITLE="${MC_VERSION} - ${VERSION} - Snapshot"
@@ -229,11 +253,11 @@ jobs:
           echo "title=${RELEASE_TITLE}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: ${{ steps.release-info.outputs.title }}
           tag_name: v${{ needs.check-version.outputs.version }}
-          files: ${{ needs.build.outputs.jar-files }}
+          files: build/libs/*.jar
           draft: false
           prerelease: ${{ needs.check-version.outputs.is-snapshot == 'true' || needs.check-version.outputs.release-type != 'release' }}
           body: |
